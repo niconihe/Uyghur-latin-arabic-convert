@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>维文转换工具 - Material You</title>
+  <!-- 引入字体 -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <style>
+    /* 定义主题颜色与常用变量 */
+    :root {
+      --primary: #6750A4;           /* 主色调 */
+      --on-primary: #FFFFFF;         /* 主色调上使用的文字颜色 */
+      --surface: #FEF7FF;            /* 背景色 */
+      --surface-container: #F3EDF7;    /* 卡片或容器背景色 */
+      --on-surface: #1C1B1F;          /* 表面文字颜色 */
+      --elevation: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+    }
+    /* 暗黑模式下的变量设置 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #D0BCFF;
+        --on-primary: #381E72;
+        --surface: #1C1B1F;
+        --surface-container: #2D2A32;
+        --on-surface: #E6E1E5;
+        --elevation: 0px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+    }
+    /* 全局样式 */
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--surface);
+      color: var(--on-surface);
+      padding: 16px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    /* 网格布局：三栏显示（左边拉丁输入，中间转换按钮，右边阿拉伯输入） */
+    .converter-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 24px;
+      margin-top: 32px;
+      align-items: start;
+    }
+    /* 文本输入区域样式 */
+    .text-field {
+      background: var(--surface-container);
+      border-radius: 16px;
+      padding: 16px;
+      position: relative;
+      box-shadow: var(--elevation);
+      transition: box-shadow 0.3s ease;
+    }
+    /* 当输入区域聚焦时，增加阴影效果 */
+    .text-field:focus-within {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      border: none;
+      background: transparent;
+      resize: none;
+      font-size: 16px;
+      color: var(--on-surface);
+      padding: 8px 0;
+      outline: none;
+    }
+    /* 拉丁文输入区域使用等宽字体 */
+    #latinText {
+      font-family: 'Roboto Mono', monospace;
+    }
+    /* 阿拉伯文本区域设置右向排版 */
+    .rtl-text {
+      direction: rtl;
+      text-align: right;
+      font-family: 'Noto Sans Arabic', 'Roboto', sans-serif;
+    }
+    /* 按钮组样式 */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      justify-content: center;
+    }
+    /* Material You 风格按钮 */
+    .m3-button {
+      background: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--elevation);
+    }
+    .m3-button:hover {
+      background: #5e3cba;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .m3-button:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.5);
+    }
+    /* 涟漪效果：点击按钮时出现的动效 */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.2);
+      transform: scale(0);
+      animation: ripple 400ms cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+    @keyframes ripple {
+      to { transform: scale(4); opacity: 0; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .ripple { background-color: rgba(0, 0, 0, 0.2); }
+    }
+    /* 复制按钮样式，与主按钮风格统一 */
+    .copy-button {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--elevation);
+    }
+    .copy-button:hover {
+      background: #5e3cba;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    /* Toast通知样式 */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      animation: fadeInOut 2s ease-in-out;
+      opacity: 0;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    /* 小屏幕下的响应式设置 */
+    @media (max-width: 768px) {
+      .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .button-group {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      .m3-button { flex: 1; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 页面主体容器 -->
+  <div class="container">
+    <div class="converter-grid">
+      <!-- 拉丁文输入区 -->
+      <div class="text-field">
+        <textarea id="latinText" placeholder="输入拉丁维文..."></textarea>
+        <!-- 复制按钮，点击复制拉丁文内容 -->
+        <button class="m3-button copy-button" onclick="copyText('latinText')">
+          <span class="material-symbols-outlined">content_copy</span>
+        </button>
+      </div>
+      <!-- 转换按钮区 -->
+      <div class="button-group">
+        <!-- 拉丁转阿拉伯按钮 -->
+        <button class="m3-button" onclick="convertToArabic()">
+          <span class="material-symbols-outlined">arrow_forward</span>
+          转换
+        </button>
+        <!-- 阿拉伯转拉丁按钮 -->
+        <button class="m3-button" onclick="convertToLatin()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          转换
+        </button>
+      </div>
+      <!-- 阿拉伯文输入区 -->
+      <div class="text-field">
+        <textarea id="arabicText" class="rtl-text" placeholder="كىرگۈزۈڭ..."></textarea>
+        <!-- 复制按钮，点击复制阿拉伯文内容 -->
+        <button class="m3-button copy-button" onclick="copyText('arabicText')">
+          <span class="material-symbols-outlined">content_copy</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* 
+      以下为转换工具核心逻辑，基于 ULY（拉丁维文）的规则：
+      
+      1. 定义拉丁维文到阿拉伯维文的映射表（latinToArabicMap）。
+      2. 定义阿拉伯维文到拉丁维文的映射表（arabicToLatinMap）。
+      3. 转换函数 createConverter()：
+         - 进行 Unicode 正规化（NFC）。
+         - 如果是拉丁转阿拉伯，则先将输入转为小写。
+         - 首先处理多字符组合（如 "ng", "gh", "ch", "sh", "zh"）以确保正确替换。
+         - 接着遍历映射表中剩余的单字符进行替换。
+         - 如果是拉丁→阿拉伯，并且原始输入以元音开头，则在结果前添加 "ئ"（符合阿拉伯书写规则）。
+         - 使用 try/catch 捕获可能的错误，防止程序崩溃。
+    */
+    
+    // 映射表：拉丁维文 → 阿拉伯维文（依据 ULY 规则）
+    const latinToArabicMap = {
+      'ng': 'ڭ', 'gh': 'غ', 'ch': 'چ', 'sh': 'ش', 'zh': 'ژ',
+      'ü': 'ۈ', 'ö': 'ۆ', 'ë': 'ې',
+      'a': 'ا', 'e': 'ە', 'i': 'ى', 'o': 'و',
+      'u': 'ۇ', 'b': 'ب', 'p': 'پ', 't': 'ت',
+      'j': 'ج', 'x': 'خ', 'd': 'د', 'r': 'ر',
+      'z': 'ز', 's': 'س', 'f': 'ف', 'q': 'ق',
+      'k': 'ك', 'g': 'گ', 'l': 'ل', 'm': 'م',
+      'n': 'ن', 'h': 'ھ', 'w': 'ۋ', 'y': 'ي',
+      'ʼ': 'ئ', 'w': 'ۋ'
+    };
+
+    // 映射表：阿拉伯维文 → 拉丁维文
+    const arabicToLatinMap = {
+      'چ': 'ch', 'ش': 'sh', 'غ': 'gh', 'ژ': 'zh',
+      'ڭ': 'ng', 'ۈ': 'ü', 'ۆ': 'ö', 'ې': 'ë',
+      'ا': 'a', 'ە': 'e', 'ى': 'i', 'و': 'o',
+      'ۇ': 'u', 'ب': 'b', 'پ': 'p', 'ت': 't',
+      'ج': 'j', 'خ': 'x', 'د': 'd', 'ر': 'r',
+      'ز': 'z', 'س': 's', 'ف': 'f', 'ق': 'q',
+      'ك': 'k', 'گ': 'g', 'ل': 'l', 'م': 'm',
+      'ن': 'n', 'ھ': 'h', 'ۋ': 'w', 'ي': 'y',
+      'ئ': ''
+    };
+
+    // 转换函数，根据 isLatinToArabic 标志决定转换方向
+    function createConverter(map, isLatinToArabic = false) {
+      return (text) => {
+        try {
+          // 使用 NFC 进行 Unicode 正规化，确保字符格式统一
+          let result = text.normalize('NFC');
+          // 若是拉丁转阿拉伯，先将输入转为小写
+          if (isLatinToArabic) {
+            result = result.toLowerCase();
+          }
+          // 先处理多字符组合，避免单字符替换时出现冲突
+          const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
+          multiSeq.forEach(seq => {
+            // 全局替换多字符组合
+            result = result.replace(new RegExp(seq, 'g'), map[seq]);
+          });
+          // 处理剩余的单字符替换（过滤掉已处理的多字符组合）
+          Object.keys(map).forEach(letter => {
+            if (!multiSeq.includes(letter)) {
+              result = result.replace(new RegExp(letter, 'g'), map[letter]);
+            }
+          });
+          // 如果为拉丁转阿拉伯，并且原始输入以元音开头，则在结果前添加 "ئ"
+          if (isLatinToArabic && /^[aeiou]/i.test(text)) {
+            result = 'ئ' + result;
+          }
+          return result;
+        } catch (e) {
+          console.error("转换错误：", e);
+          return text;
+        }
+      };
+    }
+
+    // 根据映射表创建转换函数
+    const toArabic = createConverter(latinToArabicMap, true);
+    const toLatin = createConverter(arabicToLatinMap);
+
+    // 转换按钮的功能函数
+    function convertToArabic() {
+      const input = document.getElementById('latinText').value;
+      document.getElementById('arabicText').value = toArabic(input);
+    }
+    function convertToLatin() {
+      const input = document.getElementById('arabicText').value;
+      document.getElementById('latinText').value = toLatin(input);
+    }
+
+    // 复制功能：复制指定文本区域内容到剪贴板
+    async function copyText(elementId) {
+      try {
+        const text = document.getElementById(elementId).value;
+        await navigator.clipboard.writeText(text);
+        showToast('已复制到剪贴板');
+      } catch (err) {
+        showToast('复制失败，请手动选择复制');
+      }
+    }
+
+    // 显示 Toast 通知
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => { document.body.removeChild(toast); }, 2000);
+    }
+
+    // 按钮涟漪效果：点击按钮时显示涟漪动画
+    function createRipple(event) {
+      const button = event.currentTarget;
+      const circle = document.createElement("span");
+      const diameter = Math.max(button.clientWidth, button.clientHeight);
+      const radius = diameter / 2;
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
+      circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
+      circle.classList.add("ripple");
+      // 动画结束后移除涟漪元素
+      circle.addEventListener('animationend', () => { circle.remove(); });
+      // 如果已有涟漪，先移除旧的
+      const ripple = button.getElementsByClassName("ripple")[0];
+      if (ripple) { ripple.remove(); }
+      button.appendChild(circle);
+    }
+    // 为所有按钮绑定涟漪点击效果
+    document.querySelectorAll('.m3-button').forEach(button => {
+      button.addEventListener('click', createRipple);
+    });
+  </script>
+</body>
+</html>
