@@ -12,14 +12,13 @@
   <style>
     /* 定义主题颜色与常用变量 */
     :root {
-      --primary: #6750A4;           /* 主色调 */
-      --on-primary: #FFFFFF;         /* 主色调上使用的文字颜色 */
-      --surface: #FEF7FF;            /* 背景色 */
-      --surface-container: #F3EDF7;    /* 卡片或容器背景色 */
-      --on-surface: #1C1B1F;          /* 表面文字颜色 */
-      --elevation: 0px 2px 4px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+      --primary: #6750A4;
+      --on-primary: #FFFFFF;
+      --surface: #FEF7FF;
+      --surface-container: #F3EDF7;
+      --on-surface: #1C1B1F;
+      --elevation: 0px 2px 4px rgba(0, 0, 0, 0.1);
     }
-    /* 暗黑模式下的变量设置 */
     @media (prefers-color-scheme: dark) {
       :root {
         --primary: #D0BCFF;
@@ -61,7 +60,6 @@
       box-shadow: var(--elevation);
       transition: box-shadow 0.3s ease;
     }
-    /* 当输入区域聚焦时，增加阴影效果 */
     .text-field:focus-within {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
@@ -117,7 +115,7 @@
       outline: none;
       box-shadow: 0 0 0 3px rgba(103, 80, 164, 0.5);
     }
-    /* 涟漪效果：点击按钮时出现的动效 */
+    /* 涟漪效果 */
     .ripple {
       position: absolute;
       border-radius: 50%;
@@ -132,7 +130,7 @@
     @media (prefers-color-scheme: dark) {
       .ripple { background-color: rgba(0, 0, 0, 0.2); }
     }
-    /* 复制按钮样式，与主按钮风格统一 */
+    /* 复制按钮样式 */
     .copy-button {
       position: absolute;
       bottom: 16px;
@@ -169,7 +167,7 @@
       90% { opacity: 1; }
       100% { opacity: 0; }
     }
-    /* 小屏幕下的响应式设置 */
+    /* 小屏幕响应 */
     @media (max-width: 768px) {
       .converter-grid {
         grid-template-columns: 1fr;
@@ -184,25 +182,21 @@
   </style>
 </head>
 <body>
-  <!-- 页面主体容器 -->
   <div class="container">
     <div class="converter-grid">
       <!-- 拉丁文输入区 -->
       <div class="text-field">
         <textarea id="latinText" placeholder="输入拉丁维文..."></textarea>
-        <!-- 复制按钮，点击复制拉丁文内容 -->
         <button class="m3-button copy-button" onclick="copyText('latinText')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
       </div>
-      <!-- 转换按钮区 -->
+      <!-- 转换按钮区（可选：保留手动转换按钮） -->
       <div class="button-group">
-        <!-- 拉丁转阿拉伯按钮 -->
         <button class="m3-button" onclick="convertToArabic()">
           <span class="material-symbols-outlined">arrow_forward</span>
           转换
         </button>
-        <!-- 阿拉伯转拉丁按钮 -->
         <button class="m3-button" onclick="convertToLatin()">
           <span class="material-symbols-outlined">arrow_back</span>
           转换
@@ -211,7 +205,6 @@
       <!-- 阿拉伯文输入区 -->
       <div class="text-field">
         <textarea id="arabicText" class="rtl-text" placeholder="كىرگۈزۈڭ..."></textarea>
-        <!-- 复制按钮，点击复制阿拉伯文内容 -->
         <button class="m3-button copy-button" onclick="copyText('arabicText')">
           <span class="material-symbols-outlined">content_copy</span>
         </button>
@@ -220,20 +213,6 @@
   </div>
 
   <script>
-    /* 
-      以下为转换工具核心逻辑，基于 ULY（拉丁维文）的规则：
-      
-      1. 定义拉丁维文到阿拉伯维文的映射表（latinToArabicMap）。
-      2. 定义阿拉伯维文到拉丁维文的映射表（arabicToLatinMap）。
-      3. 转换函数 createConverter()：
-         - 进行 Unicode 正规化（NFC）。
-         - 如果是拉丁转阿拉伯，则先将输入转为小写。
-         - 首先处理多字符组合（如 "ng", "gh", "ch", "sh", "zh"）以确保正确替换。
-         - 接着遍历映射表中剩余的单字符进行替换。
-         - 如果是拉丁→阿拉伯，并且原始输入以元音开头，则在结果前添加 "ئ"（符合阿拉伯书写规则）。
-         - 使用 try/catch 捕获可能的错误，防止程序崩溃。
-    */
-    
     // 映射表：拉丁维文 → 阿拉伯维文（依据 ULY 规则）
     const latinToArabicMap = {
       'ng': 'ڭ', 'gh': 'غ', 'ch': 'چ', 'sh': 'ش', 'zh': 'ژ',
@@ -260,29 +239,25 @@
       'ئ': ''
     };
 
-    // 转换函数，根据 isLatinToArabic 标志决定转换方向
+    // 转换函数生成器，根据 isLatinToArabic 决定转换方向
     function createConverter(map, isLatinToArabic = false) {
       return (text) => {
         try {
-          // 使用 NFC 进行 Unicode 正规化，确保字符格式统一
           let result = text.normalize('NFC');
-          // 若是拉丁转阿拉伯，先将输入转为小写
           if (isLatinToArabic) {
             result = result.toLowerCase();
           }
-          // 先处理多字符组合，避免单字符替换时出现冲突
+          // 先处理多字符组合，避免单字符替换时冲突
           const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
           multiSeq.forEach(seq => {
-            // 全局替换多字符组合
             result = result.replace(new RegExp(seq, 'g'), map[seq]);
           });
-          // 处理剩余的单字符替换（过滤掉已处理的多字符组合）
           Object.keys(map).forEach(letter => {
             if (!multiSeq.includes(letter)) {
               result = result.replace(new RegExp(letter, 'g'), map[letter]);
             }
           });
-          // 如果为拉丁转阿拉伯，并且原始输入以元音开头，则在结果前添加 "ئ"
+          // 如果为拉丁转阿拉伯，且输入以元音开头，添加 "ئ"
           if (isLatinToArabic && /^[aeiou]/i.test(text)) {
             result = 'ئ' + result;
           }
@@ -294,11 +269,10 @@
       };
     }
 
-    // 根据映射表创建转换函数
     const toArabic = createConverter(latinToArabicMap, true);
     const toLatin = createConverter(arabicToLatinMap);
 
-    // 转换按钮的功能函数
+    // 手动转换按钮的功能（可选保留）
     function convertToArabic() {
       const input = document.getElementById('latinText').value;
       document.getElementById('arabicText').value = toArabic(input);
@@ -308,7 +282,33 @@
       document.getElementById('latinText').value = toLatin(input);
     }
 
-    // 复制功能：复制指定文本区域内容到剪贴板
+    // 防抖函数，避免输入时频繁触发转换
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    // 实时转换：当编辑一边时，另一边自动更新
+    const latinInput = document.getElementById('latinText');
+    const arabicInput = document.getElementById('arabicText');
+
+    latinInput.addEventListener('input', debounce(function() {
+      // 仅当该区域处于焦点状态时触发更新，防止程序性更新造成循环
+      if (document.activeElement === latinInput) {
+        arabicInput.value = toArabic(latinInput.value);
+      }
+    }, 200));
+
+    arabicInput.addEventListener('input', debounce(function() {
+      if (document.activeElement === arabicInput) {
+        latinInput.value = toLatin(arabicInput.value);
+      }
+    }, 200));
+
+    // 复制功能：复制指定文本域内容
     async function copyText(elementId) {
       try {
         const text = document.getElementById(elementId).value;
@@ -328,7 +328,7 @@
       setTimeout(() => { document.body.removeChild(toast); }, 2000);
     }
 
-    // 按钮涟漪效果：点击按钮时显示涟漪动画
+    // 按钮涟漪效果
     function createRipple(event) {
       const button = event.currentTarget;
       const circle = document.createElement("span");
@@ -338,14 +338,11 @@
       circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
       circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
       circle.classList.add("ripple");
-      // 动画结束后移除涟漪元素
       circle.addEventListener('animationend', () => { circle.remove(); });
-      // 如果已有涟漪，先移除旧的
       const ripple = button.getElementsByClassName("ripple")[0];
       if (ripple) { ripple.remove(); }
       button.appendChild(circle);
     }
-    // 为所有按钮绑定涟漪点击效果
     document.querySelectorAll('.m3-button').forEach(button => {
       button.addEventListener('click', createRipple);
     });
