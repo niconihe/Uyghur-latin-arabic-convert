@@ -179,6 +179,150 @@
       }
       .m3-button { flex: 1; justify-content: center; }
     }
+    
+    /* 文本字段头部样式 */
+    .text-field-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(103, 80, 164, 0.1);
+    }
+    
+    .text-field-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary);
+      letter-spacing: 0.5px;
+    }
+    
+    /* 特殊字符按钮 */
+    .special-chars {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .char-button {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--primary);
+      color: var(--on-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+    }
+    
+    .char-button:hover {
+      background: #5e3cba;
+      transform: translateY(-2px);
+    }
+    
+    /* 转换指示器样式 */
+    .conversion-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      padding: 16px 0;
+    }
+    
+    .conversion-indicator .material-symbols-outlined {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+    
+    .indicator-label {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    
+    /* 按钮涟漪效果 */
+    /* 文本操作按钮容器 */
+    .text-actions {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* 复制和清空按钮样式 */
+    .action-button {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--elevation);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-button:hover {
+      background: #5e3cba;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* 删除重复的copy-button样式定义 */
+    .copy-button {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: var(--on-primary);
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, box-shadow 0.2s;
+      box-shadow: var(--elevation);
+    }
+    .copy-button:hover {
+      background: #5e3cba;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    /* Toast通知样式 */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      animation: fadeInOut 2s ease-in-out;
+      opacity: 0;
+    }
+    @keyframes fadeInOut {
+      0% { opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    /* 小屏幕响应 */
+    @media (max-width: 768px) {
+      .converter-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .conversion-indicator {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        margin: 16px 0;
+      }
+      .indicator-label {
+        margin-top: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -186,28 +330,51 @@
     <div class="converter-grid">
       <!-- 拉丁文输入区 -->
       <div class="text-field">
+        <div class="text-field-header">
+          <span class="text-field-label">拉丁维文</span>
+          <div class="special-chars">
+            <button class="char-button" onclick="insertChar('ü')">ü</button>
+            <button class="char-button" onclick="insertChar('ö')">ö</button>
+            <button class="char-button" onclick="insertChar('ë')">ë</button>
+          </div>
+        </div>
         <textarea id="latinText" placeholder="输入拉丁维文..."></textarea>
-        <button class="m3-button copy-button" onclick="copyText('latinText')">
-          <span class="material-symbols-outlined">content_copy</span>
-        </button>
+        <div class="text-actions">
+          <button class="action-button" onclick="clearText('latinText')">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+          <button class="action-button" onclick="copyText('latinText')">
+            <span class="material-symbols-outlined">content_copy</span>
+          </button>
+        </div>
       </div>
-      <!-- 转换按钮区（可选：保留手动转换按钮） -->
-      <div class="button-group">
-        <button class="m3-button" onclick="convertToArabic()">
-          <span class="material-symbols-outlined">arrow_forward</span>
-          转换
-        </button>
-        <button class="m3-button" onclick="convertToLatin()">
-          <span class="material-symbols-outlined">arrow_back</span>
-          转换
-        </button>
+      
+      <!-- 转换指示器（替换原转换按钮区） -->
+      <div class="conversion-indicator">
+        <span class="material-symbols-outlined">sync_alt</span>
+        <span class="indicator-label">自动转换</span>
       </div>
+      
       <!-- 阿拉伯文输入区 -->
       <div class="text-field">
+        <div class="text-field-header">
+          <span class="text-field-label">阿拉伯维文</span>
+          <div class="special-chars" style="visibility: hidden;">
+            <!-- 隐藏的占位按钮，保持与左侧对齐 -->
+            <button class="char-button" style="opacity: 0;">ü</button>
+            <button class="char-button" style="opacity: 0;">ö</button>
+            <button class="char-button" style="opacity: 0;">ë</button>
+          </div>
+        </div>
         <textarea id="arabicText" class="rtl-text" placeholder="كىرگۈزۈڭ..."></textarea>
-        <button class="m3-button copy-button" onclick="copyText('arabicText')">
-          <span class="material-symbols-outlined">content_copy</span>
-        </button>
+        <div class="text-actions">
+          <button class="action-button" onclick="clearText('arabicText')">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+          <button class="action-button" onclick="copyText('arabicText')">
+            <span class="material-symbols-outlined">content_copy</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -343,9 +510,50 @@
       if (ripple) { ripple.remove(); }
       button.appendChild(circle);
     }
-    document.querySelectorAll('.m3-button').forEach(button => {
-      button.addEventListener('click', createRipple);
+    
+    // 添加按钮涟漪效果
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.m3-button, .char-button, .action-button').forEach(button => {
+        button.addEventListener('click', createRipple);
+      });
     });
+    
+    // 特殊字符插入功能
+    function insertChar(char) {
+      const textarea = document.getElementById('latinText');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      
+      textarea.value = before + char + after;
+      // 设置光标位置
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
+      // 触发input事件以更新转换
+      const event = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(event);
+      // 保持焦点
+      textarea.focus();
+    }
+    
+    // 添加按钮涟漪效果
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.m3-button, .char-button, .action-button').forEach(button => {
+        button.addEventListener('click', createRipple);
+      });
+    });
+    
+    // 清空文本功能
+    function clearText(elementId) {
+      document.getElementById(elementId).value = '';
+      // 如果清空了一个文本框，也清空另一个
+      if (elementId === 'latinText') {
+        document.getElementById('arabicText').value = '';
+      } else {
+        document.getElementById('latinText').value = '';
+      }
+    }
   </script>
 </body>
 </html>
