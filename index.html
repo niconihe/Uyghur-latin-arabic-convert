@@ -66,6 +66,7 @@
     .text-field:focus-within {
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+    /* 调整文本区域的底部内边距，为按钮留出空间 */
     textarea {
       width: 100%;
       height: 200px;
@@ -74,8 +75,9 @@
       resize: none;
       font-size: 16px;
       color: var(--on-surface);
-      padding: 8px 0;
+      padding: 8px 0 40px 0; /* 增加底部内边距，为按钮留出空间 */
       outline: none;
+      box-sizing: border-box; /* 确保内边距不会增加总高度 */
     }
 
     /* 自定义滚动条样式 */
@@ -83,9 +85,11 @@
       width: 12px;
     }
 
+    /* 自定义滚动条轨道样式，添加底部边距 */
     textarea::-webkit-scrollbar-track {
       background: var(--surface-container);
       border-radius: 6px;
+      margin-bottom: 40px; /* 关键：设置滚动条轨道底部margin，让滚动条不会延伸到底部 */
     }
 
     textarea::-webkit-scrollbar-thumb {
@@ -102,6 +106,7 @@
     @media (prefers-color-scheme: dark) {
       textarea::-webkit-scrollbar-track {
         background: var(--scrollbar-track);
+        margin-bottom: 40px; /* 深色模式也添加底部边距 */
       }
 
       textarea::-webkit-scrollbar-thumb {
@@ -281,7 +286,6 @@
       font-size: 14px;
     }
     
-    /* 按钮涟漪效果 */
     /* 文本操作按钮容器 */
     .text-actions {
       position: absolute;
@@ -289,6 +293,14 @@
       right: 16px;
       display: flex;
       gap: 8px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .text-actions.visible {
+      opacity: 1;
+      visibility: visible;
     }
     
     /* 阿拉伯维文区域的按钮位置 */
@@ -318,40 +330,6 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
-    /* 删除重复的copy-button样式定义 */
-    .copy-button {
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: var(--primary);
-      color: var(--on-primary);
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s, box-shadow 0.2s;
-      box-shadow: var(--elevation);
-    }
-    .copy-button:hover {
-      background: #5e3cba;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    /* Toast通知样式 */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
-      animation: fadeInOut 2s ease-in-out;
-      opacity: 0;
-    }
-    @keyframes fadeInOut {
-      0% { opacity: 0; }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { opacity: 0; }
-    }
     /* 小屏幕响应 */
     @media (max-width: 768px) {
       .converter-grid {
@@ -494,31 +472,48 @@
       document.getElementById('latinText').value = toLatin(input);
     }
 
-    // 防抖函数，避免输入时频繁触发转换
-    function debounce(func, wait) {
-      let timeout;
-      return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-      };
-    }
-
-    // 实时转换：当编辑一边时，另一边自动更新
+    // 获取DOM元素
     const latinInput = document.getElementById('latinText');
     const arabicInput = document.getElementById('arabicText');
+    const latinActions = latinInput.parentElement.querySelector('.text-actions');
+    const arabicActions = arabicInput.parentElement.querySelector('.text-actions');
 
-    latinInput.addEventListener('input', debounce(function() {
-      // 仅当该区域处于焦点状态时触发更新，防止程序性更新造成循环
+    // 更新按钮显示状态 - 改进版
+    function updateButtonVisibility() {
+      // 检查两个文本框是否有内容
+      const hasLatinContent = latinInput.value.trim() !== '';
+      const hasArabicContent = arabicInput.value.trim() !== '';
+      
+      // 只有当任一输入框有内容时才显示两侧的按钮
+      if (hasLatinContent || hasArabicContent) {
+        latinActions.classList.add('visible');
+        arabicActions.classList.add('visible');
+      } else {
+        latinActions.classList.remove('visible');
+        arabicActions.classList.remove('visible');
+      }
+    }
+
+    // 修改输入事件处理函数
+    latinInput.addEventListener('input', function() {
       if (document.activeElement === latinInput) {
+        // 更新阿拉伯文本
         arabicInput.value = toArabic(latinInput.value);
+        
+        // 立即更新按钮状态
+        updateButtonVisibility();
       }
-    }, 200));
+    });
 
-    arabicInput.addEventListener('input', debounce(function() {
+    arabicInput.addEventListener('input', function() {
       if (document.activeElement === arabicInput) {
+        // 更新拉丁文本
         latinInput.value = toLatin(arabicInput.value);
+        
+        // 立即更新按钮状态
+        updateButtonVisibility();
       }
-    }, 200));
+    });
 
     // 复制功能：复制指定文本域内容
     async function copyText(elementId) {
@@ -556,13 +551,6 @@
       button.appendChild(circle);
     }
     
-    // 添加按钮涟漪效果
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('.m3-button, .char-button, .action-button').forEach(button => {
-        button.addEventListener('click', createRipple);
-      });
-    });
-    
     // 特殊字符插入功能
     function insertChar(char) {
       const textarea = document.getElementById('latinText');
@@ -578,18 +566,13 @@
       // 触发input事件以更新转换
       const event = new Event('input', { bubbles: true });
       textarea.dispatchEvent(event);
+      // 更新按钮显示状态
+      updateButtonVisibility();
       // 保持焦点
       textarea.focus();
     }
     
-    // 添加按钮涟漪效果
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('.m3-button, .char-button, .action-button').forEach(button => {
-        button.addEventListener('click', createRipple);
-      });
-    });
-    
-    // 清空文本功能
+    // 清空文本功能 - 修改版
     function clearText(elementId) {
       document.getElementById(elementId).value = '';
       // 如果清空了一个文本框，也清空另一个
@@ -598,7 +581,20 @@
       } else {
         document.getElementById('latinText').value = '';
       }
+      // 直接更新按钮状态
+      updateButtonVisibility();
     }
+
+    // 添加按钮涟漪效果
+    document.addEventListener('DOMContentLoaded', function() {
+      // 应用涟漪效果
+      document.querySelectorAll('.m3-button, .char-button, .action-button').forEach(button => {
+        button.addEventListener('click', createRipple);
+      });
+      
+      // 初始化按钮状态
+      updateButtonVisibility();
+    });
   </script>
 </body>
 </html>
