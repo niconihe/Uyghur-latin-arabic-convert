@@ -120,6 +120,8 @@
     /* 阿拉伯文本区域设置右向排版 */
     .rtl-text {
       font-family: 'Noto Sans Arabic', 'Roboto', sans-serif;
+      direction: rtl;
+      text-align: right;
     }
     /* 按钮组样式 */
     .button-group {
@@ -287,6 +289,12 @@
       right: 16px;
       display: flex;
       gap: 8px;
+    }
+    
+    /* 阿拉伯维文区域的按钮位置 */
+    #arabicText ~ .text-actions {
+      right: auto;
+      left: 16px;
     }
     
     /* 复制和清空按钮样式 */
