@@ -563,9 +563,8 @@
       textarea.value = before + char + after;
       // 设置光标位置
       textarea.selectionStart = textarea.selectionEnd = start + 1;
-      // 触发input事件以更新转换
-      const event = new Event('input', { bubbles: true });
-      textarea.dispatchEvent(event);
+      // 更新阿拉伯维文
+      document.getElementById('arabicText').value = toArabic(textarea.value);
       // 更新按钮显示状态
       updateButtonVisibility();
       // 保持焦点
