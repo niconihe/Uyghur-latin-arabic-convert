@@ -27,6 +27,9 @@
         --surface-container: #2D2A32;
         --on-surface: #E6E1E5;
         --elevation: 0px 2px 4px rgba(0, 0, 0, 0.5);
+        --scrollbar-track: #1C1B1F;
+        --scrollbar-thumb: #4A4458;
+        --scrollbar-thumb-hover: #6750A4;
       }
     }
     /* 全局样式 */
@@ -74,14 +77,48 @@
       padding: 8px 0;
       outline: none;
     }
+
+    /* 自定义滚动条样式 */
+    textarea::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    textarea::-webkit-scrollbar-track {
+      background: var(--surface-container);
+      border-radius: 6px;
+    }
+
+    textarea::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 6px;
+      border: 3px solid var(--surface-container);
+      cursor: default;
+    }
+
+    textarea::-webkit-scrollbar-thumb:hover {
+      background: #5e3cba;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      textarea::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+      }
+
+      textarea::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-color: var(--scrollbar-track);
+      }
+
+      textarea::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover);
+      }
+    }
     /* 拉丁文输入区域使用等宽字体 */
     #latinText {
       font-family: 'Roboto Mono', monospace;
     }
     /* 阿拉伯文本区域设置右向排版 */
     .rtl-text {
-      direction: rtl;
-      text-align: right;
       font-family: 'Noto Sans Arabic', 'Roboto', sans-serif;
     }
     /* 按钮组样式 */
