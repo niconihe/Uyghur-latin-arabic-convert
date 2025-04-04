@@ -497,6 +497,15 @@
     // 修改输入事件处理函数
     latinInput.addEventListener('input', function() {
       if (document.activeElement === latinInput) {
+        // 自动将v转换为ü
+        const cursorPos = this.selectionStart;
+        if (this.value.includes('v')) {
+          const newValue = this.value.replace(/v/g, 'ü');
+          this.value = newValue;
+          // 保持光标位置在原来的位置后一位（因为替换后的字符长度相同）
+          this.selectionStart = this.selectionEnd = cursorPos;
+        }
+        
         // 更新阿拉伯文本
         arabicInput.value = toArabic(latinInput.value);
         
