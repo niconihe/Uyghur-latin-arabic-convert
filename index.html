@@ -434,20 +434,26 @@
           let result = text.normalize('NFC');
           if (isLatinToArabic) {
             result = result.toLowerCase();
-          }
-          // 先处理多字符组合，避免单字符替换时冲突
-          const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
-          multiSeq.forEach(seq => {
-            result = result.replace(new RegExp(seq, 'g'), map[seq]);
-          });
-          Object.keys(map).forEach(letter => {
-            if (!multiSeq.includes(letter)) {
-              result = result.replace(new RegExp(letter, 'g'), map[letter]);
+            // 先处理多字符组合，避免单字符替换时冲突
+            const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
+            multiSeq.forEach(seq => {
+              result = result.replace(new RegExp(seq, 'g'), map[seq]);
+            });
+            // 然后处理单字符
+            Object.keys(map).forEach(letter => {
+              if (!multiSeq.includes(letter)) {
+                result = result.replace(new RegExp(letter, 'g'), map[letter]);
+              }
+            });
+            // 如果为拉丁转阿拉伯，且输入以元音开头，添加 "ئ"
+            if (/^[aeiou]/i.test(text)) {
+              result = 'ئ' + result;
             }
-          });
-          // 如果为拉丁转阿拉伯，且输入以元音开头，添加 "ئ"
-          if (isLatinToArabic && /^[aeiou]/i.test(text)) {
-            result = 'ئ' + result;
+          } else {
+            // 阿拉伯转拉丁，直接替换每个字符
+            Object.keys(map).forEach(letter => {
+              result = result.replace(new RegExp(letter, 'g'), map[letter] || '');
+            });
           }
           return result;
         } catch (e) {
