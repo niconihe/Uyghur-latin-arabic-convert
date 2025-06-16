@@ -411,7 +411,9 @@
       'z': 'ز', 's': 'س', 'f': 'ف', 'q': 'ق',
       'k': 'ك', 'g': 'گ', 'l': 'ل', 'm': 'م',
       'n': 'ن', 'h': 'ھ', 'w': 'ۋ', 'y': 'ي',
-      'ʼ': 'ئ', 'w': 'ۋ'
+      'ʼ': 'ئ', 'w': 'ۋ',
+      // 添加英语符号到阿拉伯符号的转换
+      ',': '،', ';': '؛', '?': '؟'
     };
 
     // 映射表：阿拉伯维文 → 拉丁维文
@@ -424,7 +426,9 @@
       'ز': 'z', 'س': 's', 'ف': 'f', 'ق': 'q',
       'ك': 'k', 'گ': 'g', 'ل': 'l', 'م': 'm',
       'ن': 'n', 'ھ': 'h', 'ۋ': 'w', 'ي': 'y',
-      'ئ': ''
+      'ئ': '',
+      // 添加阿拉伯符号到英语符号的转换
+      '،': ',', '؛': ';', '؟': '?'
     };
 
     // 转换函数生成器，根据 isLatinToArabic 决定转换方向
@@ -442,7 +446,12 @@
             // 然后处理单字符
             Object.keys(map).forEach(letter => {
               if (!multiSeq.includes(letter)) {
-                result = result.replace(new RegExp(letter, 'g'), map[letter]);
+                // 使用字符串替换而不是正则表达式，以避免特殊字符（如逗号、分号等）在正则中的问题
+                if ([',', ';', '?'].includes(letter)) {
+                  result = result.split(letter).join(map[letter]);
+                } else {
+                  result = result.replace(new RegExp(letter, 'g'), map[letter]);
+                }
               }
             });
             // 如果为拉丁转阿拉伯，且输入以元音开头，添加 "ئ"
