@@ -510,13 +510,25 @@
     // 修改输入事件处理函数
     latinInput.addEventListener('input', function() {
       if (document.activeElement === latinInput) {
-        // 自动将v转换为ü
         const cursorPos = this.selectionStart;
-        if (this.value.includes('v')) {
-          const newValue = this.value.replace(/v/g, 'ü');
+        let newValue = this.value;
+        let positionAdjustment = 0;
+        
+        // 自动将v转换为ü
+        if (newValue.includes('v')) {
+          newValue = newValue.replace(/v/g, 'ü');
+        }
+        
+        // 自动将单引号(')转换为ʼ
+        if (newValue.includes("'")) {
+          newValue = newValue.replace(/'/g, 'ʼ');
+        }
+        
+        // 如果有任何替换，更新文本框的值并保持光标位置
+        if (newValue !== this.value) {
           this.value = newValue;
-          // 保持光标位置在原来的位置后一位（因为替换后的字符长度相同）
-          this.selectionStart = this.selectionEnd = cursorPos;
+          // 保持光标位置在原来的位置（因为替换后的字符长度可能不同）
+          this.selectionStart = this.selectionEnd = cursorPos + positionAdjustment;
         }
         
         // 更新阿拉伯文本
