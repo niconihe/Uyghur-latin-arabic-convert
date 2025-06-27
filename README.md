@@ -4,6 +4,12 @@
 
 这是一个基于 **Material You** 风格的网页工具，用于实现 **拉丁维吾尔语** (Uyghur Latin Yéziqi - **ULY**) 与 **阿拉伯维吾尔语** (Uyghur Arabic Yéziqi - **UAY**) 之间的相互转写。
 
+使用键盘时部分字母的的替换规则：
+
+v 转换为 ü
+
+将英语字符 ' 转换为 ʼ 用来输入hamza (ئ)
+
 <https://niconihe.github.io/Uyghur-latin-arabic-convert/>
 
 如果您有任何建议或改进，欢迎提出 Issue 或提交 Pull Request！
