@@ -199,9 +199,11 @@
       background: rgba(0, 0, 0, 0.7);
       color: white;
       padding: 12px 24px;
-      border-radius: 8px;
+      border-radius: 18px;
       animation: fadeInOut 2s ease-in-out;
       opacity: 0;
+      font-size: 15px;
+      font-weight: 500;
     }
     @keyframes fadeInOut {
       0% { opacity: 0; }
@@ -372,7 +374,7 @@
       
       <!-- 转换指示器（替换原转换按钮区） -->
       <div class="conversion-indicator">
-        <span class="material-symbols-outlined">sync_alt</span>
+        <span class="material-symbols-outlined">swap_horiz</span>
         <span class="indicator-label">自动转换</span>
       </div>
       
@@ -380,7 +382,7 @@
       <div class="text-field">
         <div class="text-field-header">
           <span class="text-field-label">阿拉伯维文</span>
-          <div class="special-chars" style="visibility: hidden;">
+          <div class="special-chars" aria-hidden="true" style="visibility: hidden;">
             <!-- 隐藏的占位按钮，保持与左侧对齐 -->
             <button class="char-button" style="opacity: 0;">ü</button>
             <button class="char-button" style="opacity: 0;">ö</button>
@@ -403,15 +405,15 @@
   <script>
     // 映射表：拉丁维文 → 阿拉伯维文（依据 ULY 规则）
     const latinToArabicMap = {
-      'ng': 'ڭ', 'gh': 'غ', 'ch': 'چ', 'sh': 'ش', 'zh': 'ژ',
-      'ü': 'ۈ', 'ö': 'ۆ', 'ë': 'ې',
+      'ch': 'چ', 'sh': 'ش', 'gh': 'غ', 'zh': 'ژ',
+      'ng': 'ڭ', 'ü': 'ۈ', 'ö': 'ۆ', 'ë': 'ې',
       'a': 'ا', 'e': 'ە', 'i': 'ى', 'o': 'و',
       'u': 'ۇ', 'b': 'ب', 'p': 'پ', 't': 'ت',
       'j': 'ج', 'x': 'خ', 'd': 'د', 'r': 'ر',
       'z': 'ز', 's': 'س', 'f': 'ف', 'q': 'ق',
       'k': 'ك', 'g': 'گ', 'l': 'ل', 'm': 'م',
       'n': 'ن', 'h': 'ھ', 'w': 'ۋ', 'y': 'ي',
-      'ʼ': 'ئ', 'w': 'ۋ',
+      'ʼ': 'ئ',
       // 添加英语符号到阿拉伯符号的转换
       ',': '،', ';': '؛', '?': '؟'
     };
@@ -433,57 +435,47 @@
 
     // 转换函数生成器，根据 isLatinToArabic 决定转换方向
     function createConverter(map, isLatinToArabic = false) {
-      return (text) => {
-        try {
-          let result = text.normalize('NFC');
-          if (isLatinToArabic) {
-            result = result.toLowerCase();
-            // 先处理多字符组合，避免单字符替换时冲突
-            const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
-            multiSeq.forEach(seq => {
-              result = result.replace(new RegExp(seq, 'g'), map[seq]);
-            });
-            // 然后处理单字符
-            Object.keys(map).forEach(letter => {
-              if (!multiSeq.includes(letter)) {
-                // 使用字符串替换而不是正则表达式，以避免特殊字符（如逗号、分号等）在正则中的问题
-                if ([',', ';', '?'].includes(letter)) {
-                  result = result.split(letter).join(map[letter]);
-                } else {
-                  result = result.replace(new RegExp(letter, 'g'), map[letter]);
-                }
-              }
-            });
-            // 如果为拉丁转阿拉伯，且输入以元音开头，添加 "ئ"
-            if (/^[aeiou]/i.test(text)) {
-              result = 'ئ' + result;
-            }
-          } else {
-            // 阿拉伯转拉丁，直接替换每个字符
-            Object.keys(map).forEach(letter => {
-              result = result.replace(new RegExp(letter, 'g'), map[letter] || '');
-            });
-          }
-          return result;
-        } catch (e) {
-          console.error("转换错误：", e);
-          return text;
+    return (text) => {
+      let result = text.normalize('NFC');
+      if (isLatinToArabic) {
+        result = result.toLowerCase();
+
+        // 先处理多字符组合，避免单字符替换时冲突
+        const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
+        multiSeq.forEach(seq => {
+          result = result.replace(new RegExp(seq, 'g'), map[seq]);
+        });
+
+        // 如果为拉丁转阿拉伯，处理元音开头的情况（必须在单字符替换之前）
+        if (/^[aeiouëöü]/i.test(result)) {
+          result = 'ئ' + result;
         }
-      };
-    }
+
+        // 处理空格后的元音，在这些元音前添加hamza
+        result = result.replace(/(\s)([aeiouëöü])/gi, '$1ئ$2');
+
+        // 再处理单字符
+        Object.keys(map).forEach(letter => {
+          if (!multiSeq.includes(letter)) {
+            if ([',', ';', '?'].includes(letter)) {
+              result = result.split(letter).join(map[letter]);
+            } else {
+              result = result.replace(new RegExp(letter, 'g'), map[letter]);
+            }
+          }
+        });
+      } else {
+        // 阿拉伯转拉丁，直接替换每个字符
+        Object.keys(map).forEach(letter => {
+          result = result.replace(new RegExp(letter, 'g'), map[letter] || '');
+        });
+      }
+      return result;
+  };
+}
 
     const toArabic = createConverter(latinToArabicMap, true);
     const toLatin = createConverter(arabicToLatinMap);
-
-    // 手动转换按钮的功能（可选保留）
-    function convertToArabic() {
-      const input = document.getElementById('latinText').value;
-      document.getElementById('arabicText').value = toArabic(input);
-    }
-    function convertToLatin() {
-      const input = document.getElementById('arabicText').value;
-      document.getElementById('latinText').value = toLatin(input);
-    }
 
     // 获取DOM元素
     const latinInput = document.getElementById('latinText');
