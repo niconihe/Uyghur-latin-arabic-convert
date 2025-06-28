@@ -27,7 +27,3 @@ This is an Uyghur-language tool with **Material You** design based on web, facil
 **Link:** <https://niconihe.github.io/Uyghur-latin-arabic-convert/>
 
 If you have any suggestions or improvements, feel free to open an Issue or submit a Pull Request!
-
----
-
-</div>
