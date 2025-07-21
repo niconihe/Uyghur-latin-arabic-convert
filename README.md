@@ -6,7 +6,7 @@
 
 **键盘输入特殊规则：**
 *   `v` 自动转换为 `ü`
-*   英文撇号 `'` 自动转换为 `ʼ`（用于输入 Hamza ئ）
+*   使用英文撇号 `'` 输入 `ئ` (Hamza)
 
 **项目地址：** <https://niconihe.github.io/Uyghur-latin-arabic-convert/>
 
@@ -22,7 +22,7 @@ This is an Uyghur-language tool with **Material You** design based on web, facil
 
 **Keyboard Input Substitutions:**
 *   `v` is converted to `ü`
-*   English apostrophe `'` is converted to `ʼ` (to input Hamza ئ)
+*   Using English apostrophe `'` to input `ئ` (Hamza)
 
 **Link:** <https://niconihe.github.io/Uyghur-latin-arabic-convert/>
 
