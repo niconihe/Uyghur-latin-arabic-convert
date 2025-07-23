@@ -437,44 +437,58 @@
     // 转换函数生成器，根据 isLatinToArabic 决定转换方向
     function createConverter(map, isLatinToArabic = false) {
     return (text) => {
-      let result = text.normalize('NFC');
-      if (isLatinToArabic) {
-        result = result.toLowerCase();
+      // 保存原始换行符，以便在转换后恢复
+      const lines = text.split('\n');
+      let processedLines = [];
+      
+      // 处理每一行文本
+      for (let line of lines) {
+        let result = line.normalize('NFC');
+        if (isLatinToArabic) {
+          result = result.toLowerCase();
 
-        // 处理ngh特殊情况，将其转换为n和gh
-        result = result.replace(/ngh/gi, 'نغ');
+          // 处理ngh特殊情况，将其转换为n和gh
+          result = result.replace(/ngh/gi, 'نغ');
 
-        // 先处理多字符组合，避免单字符替换时冲突
-        const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
-        multiSeq.forEach(seq => {
-          result = result.replace(new RegExp(seq, 'g'), map[seq]);
-        });
+          // 当ng后面跟着元音时，将其转换为n和g
+          result = result.replace(/ng([aeiouëöü])/gi, 'نگ$1');
 
-        // 如果为拉丁转阿拉伯，处理元音开头的情况（必须在单字符替换之前）
-        if (/^[aeiouëöü]/i.test(result)) {
-          result = 'ئ' + result;
-        }
+          // 先处理多字符组合，避免单字符替换时冲突
+          const multiSeq = ['ng', 'gh', 'ch', 'sh', 'zh'];
+          multiSeq.forEach(seq => {
+            result = result.replace(new RegExp(seq, 'g'), map[seq]);
+          });
 
-        // 处理空格后的元音，在这些元音前添加hamza
-        result = result.replace(/(\s)([aeiouëöü])/gi, '$1ئ$2');
-
-        // 再处理单字符
-        Object.keys(map).forEach(letter => {
-          if (!multiSeq.includes(letter)) {
-            if ([',', ';', '?'].includes(letter)) {
-              result = result.split(letter).join(map[letter]);
-            } else {
-              result = result.replace(new RegExp(letter, 'g'), map[letter]);
-            }
+          // 如果为拉丁转阿拉伯，处理元音开头的情况（必须在单字符替换之前）
+          if (/^[aeiouëöü]/i.test(result)) {
+            result = 'ئ' + result;
           }
-        });
-      } else {
-        // 阿拉伯转拉丁，直接替换每个字符
-        Object.keys(map).forEach(letter => {
-          result = result.replace(new RegExp(letter, 'g'), map[letter] || '');
-        });
+
+          // 处理空格后的元音，在这些元音前添加hamza
+          result = result.replace(/(\s)([aeiouëöü])/gi, '$1ئ$2');
+
+          // 再处理单字符
+          Object.keys(map).forEach(letter => {
+            if (!multiSeq.includes(letter)) {
+              if ([',', ';', '?'].includes(letter)) {
+                result = result.split(letter).join(map[letter]);
+              } else {
+                result = result.replace(new RegExp(letter, 'g'), map[letter]);
+              }
+            }
+          });
+        } else {
+          // 阿拉伯转拉丁，直接替换每个字符
+          Object.keys(map).forEach(letter => {
+            result = result.replace(new RegExp(letter, 'g'), map[letter] || '');
+          });
+        }
+        
+        processedLines.push(result);
       }
-      return result;
+      
+      // 重新组合所有行，保留原始换行符
+      return processedLines.join('\n');
   };
 }
 
@@ -487,7 +501,7 @@
     const latinActions = latinInput.parentElement.querySelector('.text-actions');
     const arabicActions = arabicInput.parentElement.querySelector('.text-actions');
 
-    // 更新按钮显示状态 - 改进版
+    // 更新按钮显示状态
     function updateButtonVisibility() {
       // 检查两个文本框是否有内容
       const hasLatinContent = latinInput.value.trim() !== '';
@@ -503,10 +517,59 @@
       }
     }
 
-    // 存储原始阿拉伯文本中hamza的位置信息
-    let originalHamzaPositions = [];
+    // 存储原始阿拉伯文本中的词组和hamza信息
+    let originalWordHamzaInfo = [];
     
     // 修改输入事件处理函数
+    // 记录词组中hamza的相对位置
+    function recordHamzaInfo(text) {
+      const hamzaInfo = [];
+      const lines = text.split('\n');
+      for (let line of lines) {
+        const words = line.split(/\s/);
+        words.forEach(word => {
+          if (word.includes('ئ')) {
+            const positions = [];
+            for (let i = 0; i < word.length; i++) {
+              if (word[i] === 'ئ') {
+                positions.push(i);
+              }
+            }
+            hamzaInfo.push({ word: word, hamzaPositions: positions });
+          }
+        });
+      }
+      return hamzaInfo;
+    }
+
+    // 恢复词组中的hamza
+    function restoreHamzaInfo(text, hamzaInfo) {
+      const lines = text.split('\n');
+      const resultLines = [];
+      for (let line of lines) {
+        const words = line.split(/\s/);
+        for (let i = 0; i < words.length; i++) {
+          const info = hamzaInfo.find(info => {
+            const baseWord = words[i].replace(/ئ/g, '');
+            const baseOriginal = info.word.replace(/ئ/g, '');
+            return baseWord === baseOriginal;
+          });
+          if (info) {
+            let newWord = '';
+            for (let j = 0; j < words[i].length; j++) {
+              if (info.hamzaPositions.includes(j) && words[i][j] !== 'ئ') {
+                newWord += 'ئ';
+              }
+              newWord += words[i][j];
+            }
+            words[i] = newWord;
+          }
+        }
+        resultLines.push(words.join(' '));
+      }
+      return resultLines.join('\n');
+    }
+
     latinInput.addEventListener('input', function() {
       if (document.activeElement === latinInput) {
         const cursorPos = this.selectionStart;
@@ -521,50 +584,26 @@
         // 如果有任何替换，更新文本框的值并保持光标位置
         if (newValue !== this.value) {
           this.value = newValue;
-          // 保持光标位置在原来的位置（因为替换后的字符长度可能不同）
           this.selectionStart = this.selectionEnd = cursorPos + positionAdjustment;
         }
         
-        // 更新阿拉伯文本，但保留原有的hamza
+        // 更新阿拉伯文本
         let newArabicText = toArabic(latinInput.value);
         
-        // 如果有保存的hamza位置信息，尝试恢复它们
-        if (originalHamzaPositions.length > 0 && arabicInput.value) {
-          // 确保新文本长度不小于原始hamza位置
-          originalHamzaPositions.forEach(pos => {
-            if (pos < newArabicText.length) {
-              // 在原位置插入hamza，如果该位置不是词首或空格后（这些位置会自动添加hamza）
-              if (pos > 0 && newArabicText[pos-1] !== ' ' && newArabicText[pos] !== 'ئ') {
-                newArabicText = newArabicText.substring(0, pos) + 'ئ' + newArabicText.substring(pos);
-              }
-            }
-          });
+        // 如果有保存的词组hamza信息，尝试恢复它们
+        if (originalWordHamzaInfo.length > 0) {
+          newArabicText = restoreHamzaInfo(newArabicText, originalWordHamzaInfo);
         }
         
         arabicInput.value = newArabicText;
-        
-        // 立即更新按钮状态
         updateButtonVisibility();
       }
     });
 
     arabicInput.addEventListener('input', function() {
       if (document.activeElement === arabicInput) {
-        // 在更新拉丁文本前，记录当前阿拉伯文本中hamza的位置
-        originalHamzaPositions = [];
-        const arabicText = arabicInput.value;
-        
-        // 查找所有hamza的位置并记录
-        for (let i = 0; i < arabicText.length; i++) {
-          if (arabicText[i] === 'ئ') {
-            originalHamzaPositions.push(i);
-          }
-        }
-        
-        // 更新拉丁文本
+        originalWordHamzaInfo = recordHamzaInfo(arabicInput.value);
         latinInput.value = toLatin(arabicInput.value);
-        
-        // 立即更新按钮状态
         updateButtonVisibility();
       }
     });
@@ -613,32 +652,18 @@
       const text = textarea.value;
       const before = text.substring(0, start);
       const after = text.substring(end);
-      
+
       textarea.value = before + char + after;
-      // 设置光标位置
       textarea.selectionStart = textarea.selectionEnd = start + 1;
-      
-      // 更新阿拉伯维文，但保留原有的hamza
+
       let newArabicText = toArabic(textarea.value);
-      
-      // 如果有保存的hamza位置信息，尝试恢复它们
-      if (originalHamzaPositions.length > 0) {
-        // 确保新文本长度不小于原始hamza位置
-        originalHamzaPositions.forEach(pos => {
-          if (pos < newArabicText.length) {
-            // 在原位置插入hamza，如果该位置不是词首或空格后（这些位置会自动添加hamza）
-            if (pos > 0 && newArabicText[pos-1] !== ' ' && newArabicText[pos] !== 'ئ') {
-              newArabicText = newArabicText.substring(0, pos) + 'ئ' + newArabicText.substring(pos);
-            }
-          }
-        });
+
+      if (originalWordHamzaInfo.length > 0) {
+        newArabicText = restoreHamzaInfo(newArabicText, originalWordHamzaInfo);
       }
-      
+
       document.getElementById('arabicText').value = newArabicText;
-      
-      // 更新按钮显示状态
       updateButtonVisibility();
-      // 保持焦点
       textarea.focus();
     }
     
@@ -651,6 +676,8 @@
       } else {
         document.getElementById('latinText').value = '';
       }
+      // 清空hamza位置信息
+      originalWordHamzaInfo = [];
       // 直接更新按钮状态
       updateButtonVisibility();
     }
